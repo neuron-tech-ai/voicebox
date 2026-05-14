@@ -13,27 +13,72 @@ Thank you for your interest in contributing to Voicebox! This document provides 
 
 ### Prerequisites
 
+- **macOS** (Apple Silicon recommended for the MLX backend) — Windows and Linux are also supported
+- **[Homebrew](https://brew.sh)** (macOS/Linux) — used by `make install-system`
+
+### Quick setup with Make (recommended for new contributors)
+
+The `Makefile` at the repo root is the single entry point on macOS/Linux:
+
+```bash
+git clone https://github.com/jamiepine/voicebox.git
+cd voicebox
+
+make install             # installs Homebrew packages, Python venv, and JS deps
+make pre-commit-install  # wire up git hooks
+make dev-backend         # start Python API  (terminal 1)
+make dev-frontend        # start Tauri app   (terminal 2)
+```
+
+Run `make help` for the full list of targets.
+
+### Running tests
+
+```bash
+make test              # all tests (backend + frontend)
+make test-unit         # fast unit tests only (no I/O)
+make test-integration  # integration tests (real SQLite)
+```
+
+Skip the integration gate for fast WIP commits:
+
+```bash
+SKIP=pytest-integration git commit -m "your message"
+```
+
+### Alternative: just (power-user task runner)
+
+For platform-specific workflows (Windows CUDA builds, release packaging, etc.), use [just](https://github.com/casey/just):
+
+```bash
+brew install just   # or: cargo install just
+just setup          # equivalent to make install
+just dev            # backend + desktop in one command
+just --list         # see all available recipes
+```
+
+### Manual prerequisites (if not using `make install-system`)
+
 - **[Bun](https://bun.sh)** - Fast JavaScript runtime and package manager
   ```bash
   curl -fsSL https://bun.sh/install | bash
   ```
 
-- **[Python 3.11+](https://python.org)** - For backend development
+- **[Python 3.12](https://python.org)** - Recommended for widest ML package compatibility
   ```bash
-  python --version  # Should be 3.11 or higher
+  brew install python@3.12
   ```
 
-- **[Rust](https://rustup.rs)** - For Tauri desktop app (installed automatically by Tauri CLI)
+- **[Rust](https://rustup.rs)** - For the Tauri desktop app
   ```bash
-  rustc --version  # Check if installed
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
   ```
+
 - **[Tauri Prerequisites](https://v2.tauri.app/start/prerequisites)** - Tauri-specific system dependencies (varies by OS).
 
 - **Git** - Version control
 
-### Development Setup
-
-Install [just](https://github.com/casey/just) (`brew install just`, `cargo install just`, or `winget install Casey.Just`), then:
+### Development Setup (manual)
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/voicebox.git
