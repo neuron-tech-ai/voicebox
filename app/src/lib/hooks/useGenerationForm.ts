@@ -34,6 +34,35 @@ const generationSchema = z.object({
 
 export type GenerationFormValues = z.infer<typeof generationSchema>;
 
+type Engine = NonNullable<GenerationFormValues['engine']>;
+type ModelSize = GenerationFormValues['modelSize'];
+
+/** Return the backend model_name for a given engine + model size. */
+function resolveModelName(engine: Engine, modelSize: ModelSize): string {
+  switch (engine) {
+    case 'luxtts':          return 'luxtts';
+    case 'chatterbox':      return 'chatterbox-tts';
+    case 'chatterbox_turbo':return 'chatterbox-turbo';
+    case 'kokoro':          return 'kokoro';
+    case 'tada':            return modelSize === '3B' ? 'tada-3b-ml' : 'tada-1b';
+    case 'qwen_custom_voice':return `qwen-custom-voice-${modelSize}`;
+    default:                return `qwen-tts-${modelSize}`;
+  }
+}
+
+/** Return the human-readable display name for a given engine + model size. */
+function resolveDisplayName(engine: Engine, modelSize: ModelSize): string {
+  switch (engine) {
+    case 'luxtts':          return 'LuxTTS';
+    case 'chatterbox':      return 'Chatterbox TTS';
+    case 'chatterbox_turbo':return 'Chatterbox Turbo';
+    case 'kokoro':          return 'Kokoro 82M';
+    case 'tada':            return modelSize === '3B' ? 'TADA 3B Multilingual' : 'TADA 1B';
+    case 'qwen_custom_voice':return `Qwen CustomVoice ${modelSize}`;
+    default:                return `Qwen TTS ${modelSize}`;
+  }
+}
+
 interface UseGenerationFormOptions {
   onSuccess?: (generationId: string) => void;
   defaultValues?: Partial<GenerationFormValues>;
@@ -87,42 +116,12 @@ export function useGenerationForm(options: UseGenerationFormOptions = {}) {
 
     try {
       const engine = data.engine || 'qwen';
-      const modelName =
-        engine === 'luxtts'
-          ? 'luxtts'
-          : engine === 'chatterbox'
-            ? 'chatterbox-tts'
-            : engine === 'chatterbox_turbo'
-              ? 'chatterbox-turbo'
-              : engine === 'tada'
-                ? data.modelSize === '3B'
-                  ? 'tada-3b-ml'
-                  : 'tada-1b'
-                : engine === 'kokoro'
-                  ? 'kokoro'
-                  : engine === 'qwen_custom_voice'
-                    ? `qwen-custom-voice-${data.modelSize}`
-                    : `qwen-tts-${data.modelSize}`;
-      const displayName =
-        engine === 'luxtts'
-          ? 'LuxTTS'
-          : engine === 'chatterbox'
-            ? 'Chatterbox TTS'
-            : engine === 'chatterbox_turbo'
-              ? 'Chatterbox Turbo'
-              : engine === 'tada'
-                ? data.modelSize === '3B'
-                  ? 'TADA 3B Multilingual'
-                  : 'TADA 1B'
-                : engine === 'kokoro'
-                  ? 'Kokoro 82M'
-                  : engine === 'qwen_custom_voice'
-                    ? data.modelSize === '1.7B'
-                      ? 'Qwen CustomVoice 1.7B'
-                      : 'Qwen CustomVoice 0.6B'
-                    : data.modelSize === '1.7B'
-                      ? 'Qwen TTS 1.7B'
-                      : 'Qwen TTS 0.6B';
+
+      // Map engine + model size → the canonical model_name used by the
+      // backend's /models/status endpoint and the download toast. Kept as a
+      // plain lookup table so adding a new engine is a one-liner.
+      const modelName = resolveModelName(engine, data.modelSize);
+      const displayName = resolveDisplayName(engine, data.modelSize);
 
       // Check if model needs downloading
       try {

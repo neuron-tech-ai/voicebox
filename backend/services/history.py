@@ -3,7 +3,7 @@ Generation history management module.
 """
 
 from typing import List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import shutil
 from pathlib import Path
@@ -104,7 +104,7 @@ async def create_generation(
         model_size=model_size,
         status=status,
         source=source,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     db.add(db_generation)
@@ -188,10 +188,13 @@ async def list_generations(
     if query.profile_id:
         q = q.filter(DBGeneration.profile_id == query.profile_id)
     
-    # Apply search filter (searches in text content)
+    # Apply search filter (searches in text content).
+    # Escape LIKE metacharacters so a query like "50%" or "path\to\file"
+    # matches literally instead of being treated as a pattern.
     if query.search:
-        search_pattern = f"%{query.search}%"
-        q = q.filter(DBGeneration.text.like(search_pattern))
+        escaped = query.search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_pattern = f"%{escaped}%"
+        q = q.filter(DBGeneration.text.like(search_pattern, escape="\\"))
     
     # Get total count before pagination
     total_count = q.count()
@@ -204,11 +207,53 @@ async def list_generations(
     
     # Execute query
     results = q.all()
-    
+
+    # Batch-load all versions for the current page in one query to avoid
+    # the N+1 pattern that _get_versions_for_generation used to cause.
+    generation_ids = [gen.id for gen, _name in results]
+    versions_by_id: dict[str, tuple] = {}
+    if generation_ids:
+        import json
+        all_versions = (
+            db.query(DBGenerationVersion)
+            .filter(DBGenerationVersion.generation_id.in_(generation_ids))
+            .order_by(DBGenerationVersion.generation_id, DBGenerationVersion.created_at)
+            .all()
+        )
+        # Group by generation_id
+        from collections import defaultdict
+        grouped: dict[str, list] = defaultdict(list)
+        for v in all_versions:
+            grouped[v.generation_id].append(v)
+
+        for gen_id, rows in grouped.items():
+            version_list = []
+            active_version_id = None
+            for v in rows:
+                effects_chain = None
+                if v.effects_chain:
+                    try:
+                        raw = json.loads(v.effects_chain)
+                        effects_chain = [EffectConfig(**e) for e in raw]
+                    except Exception:
+                        pass
+                version_list.append(GenerationVersionResponse(
+                    id=v.id,
+                    generation_id=v.generation_id,
+                    label=v.label,
+                    audio_path=v.audio_path,
+                    effects_chain=effects_chain,
+                    is_default=v.is_default,
+                    created_at=v.created_at,
+                ))
+                if v.is_default:
+                    active_version_id = v.id
+            versions_by_id[gen_id] = (version_list or None, active_version_id)
+
     # Convert to HistoryResponse with profile_name
     items = []
     for generation, profile_name in results:
-        versions, active_version_id = _get_versions_for_generation(generation.id, db)
+        versions, active_version_id = versions_by_id.get(generation.id, (None, None))
         items.append(HistoryResponse(
             id=generation.id,
             profile_id=generation.profile_id,
@@ -228,7 +273,7 @@ async def list_generations(
             versions=versions,
             active_version_id=active_version_id,
         ))
-    
+
     return HistoryListResponse(
         items=items,
         total=total_count,
@@ -323,21 +368,22 @@ async def delete_generations_by_profile(
     """
     generations = db.query(DBGeneration).filter_by(profile_id=profile_id).all()
     
+    from . import versions as versions_mod
+
     count = 0
     for generation in generations:
         # Delete associated version files and rows first
-        from . import versions as versions_mod
         versions_mod.delete_versions_for_generation(generation.id, db)
 
         # Delete audio file
         audio_path = config.resolve_storage_path(generation.audio_path)
         if audio_path is not None and audio_path.exists():
             audio_path.unlink()
-        
+
         # Delete from database
         db.delete(generation)
         count += 1
-    
+
     db.commit()
     
     return count
