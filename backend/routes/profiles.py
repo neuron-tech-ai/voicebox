@@ -49,13 +49,21 @@ async def import_profile(
 ):
     """Import a voice profile from a ZIP archive."""
     MAX_FILE_SIZE = 100 * 1024 * 1024
+    CHUNK_SIZE = 1024 * 1024  # 1 MB
 
-    content = await file.read()
-
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=400, detail=f"File too large. Maximum size is {MAX_FILE_SIZE / (1024 * 1024)}MB"
-        )
+    # Stream-read with an early size cap so oversized uploads are rejected
+    # before the entire payload is buffered into memory.
+    chunks: list[bytes] = []
+    total = 0
+    while chunk := await file.read(CHUNK_SIZE):
+        total += len(chunk)
+        if total > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)} MB.",
+            )
+        chunks.append(chunk)
+    content = b"".join(chunks)
 
     try:
         profile = await export_import.import_profile_from_zip(content, db)
@@ -225,6 +233,9 @@ async def update_profile_sample(
     return sample
 
 
+AVATAR_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB — avatars are images; 10 MB is generous
+
+
 @router.post("/profiles/{profile_id}/avatar", response_model=models.VoiceProfileResponse)
 async def upload_profile_avatar(
     profile_id: str,
@@ -232,8 +243,19 @@ async def upload_profile_avatar(
     db: Session = Depends(get_db),
 ):
     """Upload or update avatar image for a profile."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp:
-        content = await file.read()
+    chunks: list[bytes] = []
+    total = 0
+    while chunk := await file.read(1024 * 1024):
+        total += len(chunk)
+        if total > AVATAR_MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Avatar too large. Maximum size is {AVATAR_MAX_FILE_SIZE // (1024 * 1024)} MB.",
+            )
+        chunks.append(chunk)
+    content = b"".join(chunks)
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename or "avatar.jpg").suffix) as tmp:
         tmp.write(content)
         tmp_path = tmp.name
 
