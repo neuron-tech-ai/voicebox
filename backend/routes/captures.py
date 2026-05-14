@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1 MB
+MAX_UPLOAD_BYTES = 500 * 1024 * 1024  # 500 MB — same cap as MCP transcribe for parity
 
 
 @router.post("/captures", response_model=models.CaptureCreateResponse)
@@ -30,8 +31,15 @@ async def create_capture_endpoint(
     db: Session = Depends(get_db),
 ):
     """Upload audio, run STT, persist the capture."""
-    chunks = []
+    chunks: list[bytes] = []
+    total = 0
     while chunk := await file.read(UPLOAD_CHUNK_SIZE):
+        total += len(chunk)
+        if total > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit.",
+            )
         chunks.append(chunk)
     audio_bytes = b"".join(chunks)
 
