@@ -14,11 +14,14 @@ Thank you for your interest in contributing to Voicebox! This document provides 
 ### Prerequisites
 
 - **macOS** (Apple Silicon recommended for the MLX backend) — Windows and Linux are also supported
-- **[Homebrew](https://brew.sh)** (macOS/Linux) — used by `make install-system`
+- **macOS**: [Homebrew](https://brew.sh) — used by `make install-system`
+- **Linux**: `apt-get`, `dnf`, or `pacman` — `make install-system` detects and uses whichever is present
 
 ### Quick setup with Make (recommended for new contributors)
 
-The `Makefile` at the repo root is the single entry point on macOS/Linux:
+The `Makefile` at the repo root is the single entry point. It detects your OS and uses the right package manager automatically.
+
+#### macOS
 
 ```bash
 git clone https://github.com/jamiepine/voicebox.git
@@ -28,6 +31,18 @@ make install             # installs Homebrew packages, Python venv, and JS deps
 make pre-commit-install  # wire up git hooks
 make dev-backend         # start Python API  (terminal 1)
 make dev-frontend        # start Tauri app   (terminal 2)
+```
+
+#### Linux (Ubuntu/Debian)
+
+```bash
+make install   # uses apt-get automatically
+```
+
+#### Linux (Fedora/RHEL)
+
+```bash
+make install   # uses dnf automatically
 ```
 
 Run `make help` for the full list of targets.
@@ -66,7 +81,9 @@ just --list         # see all available recipes
 
 - **[Python 3.12](https://python.org)** - Recommended for widest ML package compatibility
   ```bash
-  brew install python@3.12
+  brew install python@3.12        # macOS
+  sudo apt-get install python3.12 # Ubuntu/Debian
+  sudo dnf install python3.12     # Fedora/RHEL
   ```
 
 - **[Rust](https://rustup.rs)** - For the Tauri desktop app
@@ -183,7 +200,9 @@ This script:
 
 **Requirements:** Install `webp` and `ffmpeg`:
 ```bash
-brew install webp ffmpeg
+brew install webp ffmpeg                              # macOS
+sudo apt-get install -y ffmpeg webp                   # Ubuntu/Debian
+sudo dnf install -y ffmpeg libwebp-tools              # Fedora/RHEL
 ```
 
 > **Note:** Run this before committing new images or videos to keep the repository size small.

@@ -4,6 +4,11 @@
 # For the full task runner (build-server, release, Windows CUDA, etc.) use `just`.
 # This Makefile is the newcomer-friendly wrapper; just is the power-user tool.
 
+# ── Platform detection ────────────────────────────────────────────────────────
+
+OS   := $(shell uname -s)
+ARCH := $(shell uname -m)
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
 BACKEND_DIR   := backend
@@ -29,10 +34,37 @@ help: ## Show this help
 install: install-system install-deps ## Full install from scratch (brew deps + Python venv + JS packages)
 
 .PHONY: install-system
-install-system: ## Install system dependencies via Homebrew (reads Brewfile)
-	@echo "Checking for Homebrew..."
+install-system:  ## Install system dependencies (Mac: brew, Linux: apt/dnf)
+ifeq ($(OS),Darwin)
 	@which brew > /dev/null || (echo "Install Homebrew first: https://brew.sh" && exit 1)
 	brew bundle --file=Brewfile
+else ifeq ($(OS),Linux)
+	@$(MAKE) install-system-linux
+else
+	@echo "Unsupported OS: $(OS). Install manually: python3.12, bun, rustup, ffmpeg"
+endif
+
+.PHONY: install-system-linux
+install-system-linux:  ## Install system dependencies on Linux
+	@echo "Detecting Linux package manager..."
+	@if command -v apt-get >/dev/null 2>&1; then \
+		sudo apt-get update && sudo apt-get install -y python3.12 python3.12-venv python3.12-dev ffmpeg webp build-essential; \
+	elif command -v dnf >/dev/null 2>&1; then \
+		sudo dnf install -y python3.12 python3.12-devel ffmpeg libwebp-tools gcc; \
+	elif command -v pacman >/dev/null 2>&1; then \
+		sudo pacman -Sy --noconfirm python ffmpeg libwebp base-devel; \
+	else \
+		echo "Unknown package manager. Install manually: python3.12, ffmpeg, webp, build tools"; \
+		exit 1; \
+	fi
+	@# Install bun if not present
+	@command -v bun >/dev/null 2>&1 || curl -fsSL https://bun.sh/install | bash
+	@# Install rustup if not present
+	@command -v rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	@# Install just
+	@command -v just >/dev/null 2>&1 || cargo install just
+	@# Install pre-commit
+	@command -v pre-commit >/dev/null 2>&1 || pip3 install pre-commit
 
 .PHONY: install-deps
 install-deps: install-python install-node ## Install Python venv and JS packages
@@ -49,11 +81,16 @@ install-python: ## Create Python 3.12 venv and install backend dependencies
 	$(PIP) install --no-deps chatterbox-tts
 	@# HumeAI TADA pins torch>=2.7,<2.8 which conflicts with our torch>=2.1
 	$(PIP) install --no-deps hume-tada
-	@if [ "$$(uname -m)" = "arm64" ] && [ "$$(uname)" = "Darwin" ]; then \
-		echo "Apple Silicon detected — installing MLX backend..."; \
-		$(PIP) install -r $(BACKEND_DIR)/requirements-mlx.txt; \
-		$(PIP) install --no-deps mlx-audio==0.4.1; \
-	fi
+ifeq ($(OS),Darwin)
+ifeq ($(ARCH),arm64)
+	@echo "Apple Silicon detected — installing MLX backend..."
+	$(PIP) install -r $(BACKEND_DIR)/requirements-mlx.txt
+	$(PIP) install --no-deps mlx-audio==0.4.1
+endif
+else
+	@echo "Linux detected — installing CUDA/CPU backend deps if present"
+	@test -f $(BACKEND_DIR)/requirements-linux.txt && $(PIP) install -r $(BACKEND_DIR)/requirements-linux.txt || true
+endif
 	$(PIP) install git+https://github.com/QwenLM/Qwen3-TTS.git
 	$(PIP) install pyinstaller ruff pytest pytest-asyncio -q
 	@echo "Python environment ready."

@@ -1,5 +1,5 @@
-# Voicebox system dependencies
-# Install everything: brew bundle
+# macOS only — for Linux setup see: make install-system-linux
+# Usage: brew bundle  OR  make install-system
 
 # Python 3.12 — ML packages have the widest compatibility here
 brew "python@3.12"
