@@ -43,6 +43,7 @@ def run_migrations(engine) -> None:
     _migrate_generation_versions(engine, inspector, tables)
     _migrate_capture_settings(engine, inspector, tables)
     _migrate_mcp_bindings(engine, inspector, tables)
+    _migrate_profile_samples(engine, inspector, tables)
     _normalize_storage_paths(engine, tables)
     _add_performance_indexes(engine, tables)
 
@@ -297,6 +298,19 @@ def _supports_drop_column(engine) -> bool:
     if engine.dialect.name != "sqlite":
         return True
     return tuple(int(p) for p in sqlite3.sqlite_version.split(".")[:3]) >= (3, 35, 0)
+
+
+def _migrate_profile_samples(engine, inspector, tables: set[str]) -> None:
+    if "profile_samples" not in tables:
+        return
+    columns = _get_columns(inspector, "profile_samples")
+    if "sort_order" not in columns:
+        _add_column(engine, "profile_samples", "sort_order INTEGER NOT NULL DEFAULT 0", "sort_order")
+        with engine.connect() as conn:
+            conn.execute(
+                text("CREATE INDEX IF NOT EXISTS ix_profile_samples_sort_order ON profile_samples (sort_order)")
+            )
+            conn.commit()
 
 
 def _add_performance_indexes(engine, tables: set[str]) -> None:

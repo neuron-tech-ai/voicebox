@@ -40,26 +40,40 @@ type ModelSize = GenerationFormValues['modelSize'];
 /** Return the backend model_name for a given engine + model size. */
 function resolveModelName(engine: Engine, modelSize: ModelSize): string {
   switch (engine) {
-    case 'luxtts':          return 'luxtts';
-    case 'chatterbox':      return 'chatterbox-tts';
-    case 'chatterbox_turbo':return 'chatterbox-turbo';
-    case 'kokoro':          return 'kokoro';
-    case 'tada':            return modelSize === '3B' ? 'tada-3b-ml' : 'tada-1b';
-    case 'qwen_custom_voice':return `qwen-custom-voice-${modelSize}`;
-    default:                return `qwen-tts-${modelSize}`;
+    case 'luxtts':
+      return 'luxtts';
+    case 'chatterbox':
+      return 'chatterbox-tts';
+    case 'chatterbox_turbo':
+      return 'chatterbox-turbo';
+    case 'kokoro':
+      return 'kokoro';
+    case 'tada':
+      return modelSize === '3B' ? 'tada-3b-ml' : 'tada-1b';
+    case 'qwen_custom_voice':
+      return `qwen-custom-voice-${modelSize}`;
+    default:
+      return `qwen-tts-${modelSize}`;
   }
 }
 
 /** Return the human-readable display name for a given engine + model size. */
 function resolveDisplayName(engine: Engine, modelSize: ModelSize): string {
   switch (engine) {
-    case 'luxtts':          return 'LuxTTS';
-    case 'chatterbox':      return 'Chatterbox TTS';
-    case 'chatterbox_turbo':return 'Chatterbox Turbo';
-    case 'kokoro':          return 'Kokoro 82M';
-    case 'tada':            return modelSize === '3B' ? 'TADA 3B Multilingual' : 'TADA 1B';
-    case 'qwen_custom_voice':return `Qwen CustomVoice ${modelSize}`;
-    default:                return `Qwen TTS ${modelSize}`;
+    case 'luxtts':
+      return 'LuxTTS';
+    case 'chatterbox':
+      return 'Chatterbox TTS';
+    case 'chatterbox_turbo':
+      return 'Chatterbox Turbo';
+    case 'kokoro':
+      return 'Kokoro 82M';
+    case 'tada':
+      return modelSize === '3B' ? 'TADA 3B Multilingual' : 'TADA 1B';
+    case 'qwen_custom_voice':
+      return `Qwen CustomVoice ${modelSize}`;
+    default:
+      return `Qwen TTS ${modelSize}`;
   }
 }
 

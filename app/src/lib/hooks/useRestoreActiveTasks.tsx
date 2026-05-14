@@ -86,7 +86,7 @@ export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   'qwen-custom-voice-1.7B': 'Qwen CustomVoice 1.7B',
   'qwen-custom-voice-0.6B': 'Qwen CustomVoice 0.6B',
   // LuxTTS
-  'luxtts': 'LuxTTS',
+  luxtts: 'LuxTTS',
   // Chatterbox
   'chatterbox-tts': 'Chatterbox TTS',
   'chatterbox-turbo': 'Chatterbox Turbo',
@@ -94,7 +94,7 @@ export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   'tada-1b': 'TADA 1B',
   'tada-3b-ml': 'TADA 3B Multilingual',
   // Kokoro
-  'kokoro': 'Kokoro 82M',
+  kokoro: 'Kokoro 82M',
   // Whisper STT
   'whisper-base': 'Whisper Base',
   'whisper-small': 'Whisper Small',

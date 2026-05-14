@@ -25,9 +25,7 @@ describe('createAudioUrl', () => {
 
   it('works with a UUID-style id', () => {
     const id = '550e8400-e29b-41d4-a716-446655440000';
-    expect(createAudioUrl(id, 'https://example.com')).toBe(
-      `https://example.com/audio/${id}`,
-    );
+    expect(createAudioUrl(id, 'https://example.com')).toBe(`https://example.com/audio/${id}`);
   });
 });
 

@@ -564,7 +564,7 @@ async def create_voice_prompt_for_profile(
         raise ValueError(f"Engine '{engine}' does not support cloned voice profiles")
 
     # ── Cloned profiles: create from audio samples ──
-    samples = db.query(DBProfileSample).filter_by(profile_id=profile_id).all()
+    samples = db.query(DBProfileSample).filter_by(profile_id=profile_id).order_by(DBProfileSample.sort_order).all()
 
     if not samples:
         raise ValueError(f"No samples found for profile {profile_id}")

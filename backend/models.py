@@ -64,6 +64,12 @@ class ProfileSampleUpdate(BaseModel):
     reference_text: str = Field(..., min_length=1, max_length=1000)
 
 
+class SampleReorderRequest(BaseModel):
+    """Request model for reordering profile samples."""
+
+    sample_ids: list[str]
+
+
 class ProfileSampleResponse(BaseModel):
     """Response model for profile sample."""
 

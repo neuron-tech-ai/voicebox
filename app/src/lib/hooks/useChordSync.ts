@@ -42,9 +42,5 @@ export function useChordSync() {
     invoke(command, args).catch((err) => {
       console.warn(`[chord-sync] ${command} failed:`, err);
     });
-  }, [
-    platform.metadata.isTauri, 
-    enabled, 
-    canRecord, pushKeys, toggleKeys
-  ]);
+  }, [platform.metadata.isTauri, enabled, canRecord, pushKeys, toggleKeys]);
 }

@@ -13,9 +13,10 @@ from sqlalchemy.orm import Session
 
 from .. import config, models
 from ..app import safe_content_disposition
-from ..database import VoiceProfile as DBVoiceProfile, get_db
+from ..database import ProfileSample as DBProfileSample, VoiceProfile as DBVoiceProfile, get_db
 from ..services import channels, export_import, personality, profiles
 from ..services.profiles import _profile_to_response
+from ..utils.cache import clear_profile_cache
 
 logger = logging.getLogger(__name__)
 
@@ -232,6 +233,23 @@ async def update_profile_sample(
     if not sample:
         raise HTTPException(status_code=404, detail="Sample not found")
     return sample
+
+
+@router.patch("/profiles/{profile_id}/samples/reorder")
+async def reorder_samples(
+    profile_id: str,
+    data: models.SampleReorderRequest,
+    db: Session = Depends(get_db),
+):
+    """Reorder voice profile samples. Pass sample_ids in desired order."""
+    for idx, sample_id in enumerate(data.sample_ids):
+        db.query(DBProfileSample).filter(
+            DBProfileSample.id == sample_id,
+            DBProfileSample.profile_id == profile_id,
+        ).update({"sort_order": idx})
+    db.commit()
+    clear_profile_cache(profile_id)
+    return {"ok": True}
 
 
 AVATAR_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB — avatars are images; 10 MB is generous
