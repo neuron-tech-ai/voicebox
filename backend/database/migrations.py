@@ -44,6 +44,7 @@ def run_migrations(engine) -> None:
     _migrate_capture_settings(engine, inspector, tables)
     _migrate_mcp_bindings(engine, inspector, tables)
     _normalize_storage_paths(engine, tables)
+    _add_performance_indexes(engine, tables)
 
 
 # -- helpers ---------------------------------------------------------------
@@ -290,6 +291,35 @@ def _supports_drop_column(engine) -> bool:
     if engine.dialect.name != "sqlite":
         return True
     return tuple(int(p) for p in sqlite3.sqlite_version.split(".")[:3]) >= (3, 35, 0)
+
+
+def _add_performance_indexes(engine, tables: set[str]) -> None:
+    """Add query-performance indexes that were missing from the initial schema.
+
+    Each CREATE INDEX is wrapped in IF NOT EXISTS so this is safe to call on
+    every startup against both new and existing databases.
+    """
+    indexes = [
+        # History page: filter/sort by profile, status, created_at
+        ("generations", "ix_generations_profile_id", "profile_id"),
+        ("generations", "ix_generations_status", "status"),
+        ("generations", "ix_generations_created_at", "created_at"),
+        ("generations", "ix_generations_is_favorited", "is_favorited"),
+        # Version lookups per generation
+        ("generation_versions", "ix_generation_versions_generation_id", "generation_id"),
+        # Story item lookups per story
+        ("story_items", "ix_story_items_story_id", "story_id"),
+    ]
+    with engine.connect() as conn:
+        for table, index_name, column in indexes:
+            if table not in tables:
+                continue
+            conn.execute(
+                text(
+                    f"CREATE INDEX IF NOT EXISTS {index_name} ON {table} ({column})"
+                )
+            )
+        conn.commit()
 
 
 def _normalize_storage_paths(engine, tables: set[str]) -> None:
