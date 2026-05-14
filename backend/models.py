@@ -77,6 +77,7 @@ class ProfileSampleResponse(BaseModel):
     profile_id: str
     audio_path: str
     reference_text: str
+    sort_order: int = 0
 
     class Config:
         from_attributes = True

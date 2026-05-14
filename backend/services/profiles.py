@@ -230,11 +230,20 @@ async def add_profile_sample(
     dest_path = profile_dir / f"{sample_id}.wav"
     await asyncio.to_thread(save_audio, audio, str(dest_path), sr)
 
+    # Assign sort_order = max(existing) + 1 so each new sample appends at
+    # the end rather than landing at 0 (which would make all samples tie for
+    # the top position and produce non-deterministic ordering).
+    from sqlalchemy import func as _func
+
+    max_order = db.query(_func.max(DBProfileSample.sort_order)).filter_by(profile_id=profile_id).scalar()
+    next_order = (max_order or 0) + 1
+
     db_sample = DBProfileSample(
         id=sample_id,
         profile_id=profile_id,
         audio_path=config.to_storage_path(dest_path),
         reference_text=reference_text,
+        sort_order=next_order,
     )
 
     db.add(db_sample)
