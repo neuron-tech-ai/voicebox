@@ -139,8 +139,8 @@ function ClipWaveform({
 // Per-clip volume popover. Local state drives the slider during a drag so
 // each pointer-move pixel doesn't fire a PATCH; commits on release.
 function ClipVolumePopover({
-  storyId,
-  itemId,
+  storyId: _storyId,
+  itemId: _itemId,
   volume,
   onChange,
 }: {
