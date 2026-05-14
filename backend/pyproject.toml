@@ -81,3 +81,9 @@ docstring-code-format = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+# Marker declarations so pytest does not warn about unknown marks.
+markers = [
+    "unit: fast, pure-logic tests with no I/O",
+    "integration: tests using real SQLite DB or filesystem (no external network)",
+]

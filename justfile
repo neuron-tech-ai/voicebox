@@ -295,6 +295,13 @@ fix-python: _ensure-venv
 test: _ensure-venv
     {{ venv_bin }}/python -m pytest {{ backend_dir }}/tests -v
 
+# Run frontend tests (Vitest)
+test-frontend:
+    bun run test
+
+# Run all tests — Python + frontend
+test-all: test test-frontend
+
 # E2E: generate with every TTS model against the frozen binary (pass extra flags like --only kokoro)
 [unix]
 test-models *ARGS: _ensure-venv

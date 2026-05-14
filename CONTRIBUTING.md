@@ -301,10 +301,52 @@ When adding new API endpoints:
 
 ## Testing
 
-Currently, testing is primarily manual. When adding tests:
+The project enforces automated tests as pre-commit gates. When you run `git commit`, the following run automatically:
 
-- **Backend**: Use pytest for Python tests
-- **Frontend**: Use Vitest for React component tests
+1. Python unit tests (`backend/tests/unit/`) — fast, no I/O, pure logic
+2. Python integration tests (`backend/tests/integration/`) — real SQLite in-memory DB, no external network
+3. Frontend Vitest tests (`app/src/`)
+
+To run tests manually:
+
+```bash
+# Backend unit tests
+cd backend && python -m pytest tests/unit -x -q
+
+# Backend integration tests
+cd backend && python -m pytest tests/integration -x -q
+
+# All backend tests
+cd backend && python -m pytest tests/ -x -q
+
+# Frontend tests (non-watch)
+cd app && bun run test:run
+```
+
+### Skipping the integration gate for fast commits
+
+When you need to commit a work-in-progress that doesn't affect server logic (e.g. docs, CSS tweaks), you can skip the integration tests:
+
+```bash
+SKIP=pytest-integration git commit -m "your message"
+```
+
+To skip multiple hooks:
+
+```bash
+SKIP=pytest-integration,vitest git commit -m "your message"
+```
+
+To bypass all hooks entirely (use sparingly):
+
+```bash
+git commit --no-verify -m "your message"
+```
+
+### Adding new tests
+
+- **Backend**: Use pytest for Python tests — place fast, pure-logic tests in `backend/tests/unit/`, and tests that need a real SQLite DB or filesystem in `backend/tests/integration/`
+- **Frontend**: Use Vitest for React component and utility tests in `app/src/`
 - **E2E**: Use Playwright for end-to-end tests (future)
 
 ## Pull Request Process
