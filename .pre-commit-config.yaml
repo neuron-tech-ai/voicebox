@@ -45,3 +45,28 @@ repos:
         pass_filenames: false
         files: \.(ts|tsx)$
         exclude: ^node_modules/
+
+  # ── Tests ─────────────────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: pytest-unit
+        name: Python unit tests
+        entry: bash -c 'cd backend && python -m pytest tests/unit -x -q --tb=short'
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: pytest-integration
+        name: Python integration tests
+        entry: bash -c 'cd backend && python -m pytest tests/integration -x -q --tb=short'
+        language: system
+        pass_filenames: false
+        types: [python]
+        stages: [pre-commit]
+
+      - id: vitest
+        name: Frontend unit tests
+        entry: bash -c 'cd app && bun run test:run'
+        language: system
+        pass_filenames: false
+        types: [ts, tsx]
