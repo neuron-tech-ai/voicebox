@@ -17,13 +17,15 @@ Mode differences:
 from __future__ import annotations
 
 import asyncio
-import traceback
+import logging
 from typing import Literal, Optional
 
 from .. import config
 from . import history, profiles
 from ..database import get_db
 from ..utils.tasks import get_task_manager
+
+logger = logging.getLogger(__name__)
 
 
 async def run_generation(
@@ -136,7 +138,7 @@ async def run_generation(
         )
         _notify_speak_end(generation_id, status="cancelled")
     except Exception as e:
-        traceback.print_exc()
+        logger.exception("Generation %s failed", generation_id)
         await history.update_generation_status(
             generation_id=generation_id,
             status="failed",
@@ -204,8 +206,7 @@ def _save_generate(
 
         error_msg = validate_effects_chain(effects_chain)
         if error_msg:
-            import logging
-            logging.getLogger(__name__).warning("invalid effects chain, skipping: %s", error_msg)
+            logger.warning("invalid effects chain, skipping: %s", error_msg)
             versions_mod.set_default_version(
                 versions_mod.list_versions(generation_id, db)[0].id, db
             )

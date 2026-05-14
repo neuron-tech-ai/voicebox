@@ -1,10 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useToast } from '@/components/ui/use-toast';
-import { apiClient } from '@/lib/api/client';
-import type { EffectConfig } from '@/lib/api/types';
+import type { EffectConfig, ModelStatusListResponse } from '@/lib/api/types';
 import { LANGUAGE_CODES, type LanguageCode } from '@/lib/constants/languages';
 import { useGeneration } from '@/lib/hooks/useGeneration';
 import { useModelDownloadToast } from '@/lib/hooks/useModelDownloadToast';
@@ -71,6 +71,7 @@ interface UseGenerationFormOptions {
 
 export function useGenerationForm(options: UseGenerationFormOptions = {}) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const generation = useGeneration();
   const addPendingGeneration = useGenerationStore((state) => state.addPendingGeneration);
   const { settings: genSettings } = useGenerationSettings();
@@ -123,17 +124,16 @@ export function useGenerationForm(options: UseGenerationFormOptions = {}) {
       const modelName = resolveModelName(engine, data.modelSize);
       const displayName = resolveDisplayName(engine, data.modelSize);
 
-      // Check if model needs downloading
-      try {
-        const modelStatus = await apiClient.getModelStatus();
-        const model = modelStatus.models.find((m) => m.model_name === modelName);
-
+      // Check if model needs downloading — read from the React Query cache that
+      // ModelManagement already keeps warm under the ['modelStatus'] key.
+      // This avoids an extra network round-trip on every generation submit.
+      const cachedStatus = queryClient.getQueryData<ModelStatusListResponse>(['modelStatus']);
+      if (cachedStatus) {
+        const model = cachedStatus.models.find((m) => m.model_name === modelName);
         if (model && !model.downloaded) {
           setDownloadingModelName(modelName);
           setDownloadingDisplayName(displayName);
         }
-      } catch (error) {
-        console.error('Failed to check model status:', error);
       }
 
       const hasModelSizes =
