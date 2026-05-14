@@ -54,7 +54,7 @@ class ProfileSample(Base):
     __tablename__ = "profile_samples"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    profile_id = Column(String, ForeignKey("profiles.id"), nullable=False)
+    profile_id = Column(String, ForeignKey("profiles.id"), nullable=False, index=True)
     audio_path = Column(String, nullable=False)
     reference_text = Column(Text, nullable=False)
 
@@ -278,4 +278,4 @@ class Capture(Base):
     stt_model = Column(String, nullable=True)
     llm_model = Column(String, nullable=True)
     refinement_flags = Column(Text, nullable=True)  # JSON blob
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)

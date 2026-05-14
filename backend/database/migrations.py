@@ -309,6 +309,10 @@ def _add_performance_indexes(engine, tables: set[str]) -> None:
         ("generation_versions", "ix_generation_versions_generation_id", "generation_id"),
         # Story item lookups per story
         ("story_items", "ix_story_items_story_id", "story_id"),
+        # Capture list sorted by date
+        ("captures", "ix_captures_created_at", "created_at"),
+        # Sample lookups per profile
+        ("profile_samples", "ix_profile_samples_profile_id", "profile_id"),
     ]
     with engine.connect() as conn:
         for table, index_name, column in indexes:
