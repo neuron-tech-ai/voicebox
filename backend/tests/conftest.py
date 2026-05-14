@@ -20,7 +20,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 
-from backend.database import Base, VoiceProfile as DBVoiceProfile  # noqa: E402
+from backend.database import Base, VoiceProfile as DBVoiceProfile
 
 
 @pytest.fixture

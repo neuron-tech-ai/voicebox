@@ -39,10 +39,10 @@ def db(tmp_path):
     session.add(profile)
 
     rows = [
-        DBGeneration(id="g1", profile_id="p1", text="Hello world",      status="completed"),
-        DBGeneration(id="g2", profile_id="p1", text="50% off sale",     status="completed"),
+        DBGeneration(id="g1", profile_id="p1", text="Hello world", status="completed"),
+        DBGeneration(id="g2", profile_id="p1", text="50% off sale", status="completed"),
         DBGeneration(id="g3", profile_id="p1", text="path_to_file.wav", status="completed"),
-        DBGeneration(id="g4", profile_id="p1", text="Say 100%",         status="completed"),
+        DBGeneration(id="g4", profile_id="p1", text="Say 100%", status="completed"),
         DBGeneration(id="g5", profile_id="p1", text="under_score test", status="completed"),
     ]
     session.add_all(rows)

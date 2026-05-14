@@ -154,7 +154,7 @@ function ClipVolumePopover({
   // out-of-band (split/duplicate carry the value forward).
   useEffect(() => {
     setLocalVolume(volume);
-  }, [volume, itemId, storyId]);
+  }, [volume]);
 
   const display = Math.round(localVolume * 100);
   const Icon = localVolume === 0 ? VolumeX : Volume2;

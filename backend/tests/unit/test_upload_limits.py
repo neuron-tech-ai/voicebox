@@ -14,8 +14,6 @@ over, well within) using a pure-Python helper that mirrors the logic without
 any FastAPI or IO imports.
 """
 
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Mirror the accumulation logic as a pure function under test
@@ -45,10 +43,10 @@ def _simulate_chunked_read(
 # Fixtures — common limits mirrored from the route files
 # ---------------------------------------------------------------------------
 
-CAPTURE_MAX   = 500 * 1024 * 1024   # 500 MB  (captures.py)
-PROFILE_MAX   = 100 * 1024 * 1024   # 100 MB  (profiles.py)
-HISTORY_MAX   =  50 * 1024 * 1024   #  50 MB  (history.py import)
-CHUNK_SIZE    =   1 * 1024 * 1024   #   1 MB
+CAPTURE_MAX = 500 * 1024 * 1024  # 500 MB  (captures.py)
+PROFILE_MAX = 100 * 1024 * 1024  # 100 MB  (profiles.py)
+HISTORY_MAX = 50 * 1024 * 1024  #  50 MB  (history.py import)
+CHUNK_SIZE = 1 * 1024 * 1024  #   1 MB
 
 
 def _make_chunks(total_bytes: int, chunk_size: int = CHUNK_SIZE) -> list[bytes]:

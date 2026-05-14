@@ -27,7 +27,7 @@ from starlette.testclient import TestClient
 # ---------------------------------------------------------------------------
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
-CHUNK_SIZE = 1024 * 1024          # 1 MB
+CHUNK_SIZE = 1024 * 1024  # 1 MB
 
 
 def _make_app() -> FastAPI:

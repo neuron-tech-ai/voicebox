@@ -279,7 +279,7 @@ function DetailView({ capture }: { capture: Capture }) {
 
   useEffect(() => {
     setShowRefined(true);
-  }, [capture.id]);
+  }, []);
 
   useEffect(() => {
     const iv = window.setInterval(() => {

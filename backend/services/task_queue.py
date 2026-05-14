@@ -5,8 +5,9 @@ to avoid GPU contention.
 
 import asyncio
 import logging
+from collections.abc import Coroutine
 from dataclasses import dataclass
-from typing import Coroutine, Literal
+from typing import Literal
 
 logger = logging.getLogger(__name__)
 

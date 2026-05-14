@@ -135,7 +135,7 @@ export function useStoryPlayback(items: StoryItemDetail[] | undefined) {
     }
 
     Promise.all(preloadPromises);
-  }, [items, getAudioContext]);
+  }, [items, getAudioContext, getAudioKey, getAudioUrlForItem]);
 
   // Cleanup AudioContext on unmount
   useEffect(() => {
@@ -287,7 +287,7 @@ export function useStoryPlayback(items: StoryItemDetail[] | undefined) {
         }
       }
     },
-    [getAudioContext, findActiveItems, storyTimeToContextTime, stopSource],
+    [getAudioContext, findActiveItems, storyTimeToContextTime, stopSource, getAudioKey],
   );
 
   // Sync visual playhead from AudioContext time

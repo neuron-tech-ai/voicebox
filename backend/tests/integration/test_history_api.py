@@ -14,12 +14,12 @@ heavy ML imports (torch, soundfile, fastmcp) are never loaded during
 test collection.
 """
 
-import pytest
+from datetime import UTC
 
 from backend.models import HistoryQuery
 from backend.services.history import list_generations
-from .conftest import run
 
+from .conftest import run
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -55,24 +55,24 @@ class TestHistoryList:
         result = _list(seeded_db)
         for item in result.items:
             assert item.profile_name == "Alice", (
-                f"Expected profile_name='Alice', got {item.profile_name!r} "
-                f"for generation {item.id!r}"
+                f"Expected profile_name='Alice', got {item.profile_name!r} for generation {item.id!r}"
             )
 
     def test_default_ordering_is_newest_first(self, seeded_db):
         """Generations should come back sorted by created_at descending."""
+        from datetime import datetime, timedelta
+
         from backend.database import Generation as DBGeneration
-        from datetime import datetime, timezone, timedelta
 
         # Assign distinct timestamps so ordering is deterministic.
-        base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        base = datetime(2024, 1, 1, tzinfo=UTC)
         for i, gen_id in enumerate(["gen-1", "gen-2", "gen-3", "gen-4", "gen-5"]):
             gen = seeded_db.query(DBGeneration).filter_by(id=gen_id).first()
             gen.created_at = base + timedelta(seconds=i)
         seeded_db.commit()
 
         result = _list(seeded_db)
-        assert result.items[0].id == "gen-5"   # newest
+        assert result.items[0].id == "gen-5"  # newest
         assert result.items[-1].id == "gen-1"  # oldest
 
 
@@ -118,15 +118,15 @@ class TestHistorySearch:
         """'50%' must only match rows containing the literal string '50%'."""
         result = _list(seeded_db, search="50%")
         found = _ids(result)
-        assert "gen-2" in found        # "50% off sale"
-        assert "gen-4" not in found    # "Say 100%" does not contain "50%"
+        assert "gen-2" in found  # "50% off sale"
+        assert "gen-4" not in found  # "Say 100%" does not contain "50%"
 
     def test_underscore_treated_literally(self, seeded_db):
         """'path_to' must not match via single-char wildcard expansion."""
         result = _list(seeded_db, search="path_to")
         found = _ids(result)
-        assert "gen-3" in found        # "path_to_file.wav"
-        assert "gen-1" not in found    # "Hello world" must not match via '_'
+        assert "gen-3" in found  # "path_to_file.wav"
+        assert "gen-1" not in found  # "Hello world" must not match via '_'
 
 
 # ---------------------------------------------------------------------------
@@ -163,20 +163,23 @@ class TestN1Fix:
         this test additionally confirms that adding GenerationVersion rows
         doesn't change the total query count from the caller's perspective.
         """
-        from backend.database import GenerationVersion as DBGenerationVersion
         import uuid
-        from datetime import datetime, timezone
+        from datetime import datetime
+
+        from backend.database import GenerationVersion as DBGenerationVersion
 
         # Add one version per generation
         for gen_id in ["gen-1", "gen-2", "gen-3"]:
-            seeded_db.add(DBGenerationVersion(
-                id=str(uuid.uuid4()),
-                generation_id=gen_id,
-                label="v1",
-                audio_path=f"audio/{gen_id}-v1.wav",
-                is_default=True,
-                created_at=datetime.now(timezone.utc),
-            ))
+            seeded_db.add(
+                DBGenerationVersion(
+                    id=str(uuid.uuid4()),
+                    generation_id=gen_id,
+                    label="v1",
+                    audio_path=f"audio/{gen_id}-v1.wav",
+                    is_default=True,
+                    created_at=datetime.now(UTC),
+                )
+            )
         seeded_db.commit()
 
         result = _list(seeded_db)

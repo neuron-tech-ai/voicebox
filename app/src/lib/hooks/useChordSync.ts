@@ -43,12 +43,8 @@ export function useChordSync() {
       console.warn(`[chord-sync] ${command} failed:`, err);
     });
   }, [
-    platform.metadata.isTauri,
-    enabled,
-    canRecord,
-    // Stringify so a referentially-new array with the same content
-    // doesn't fire a redundant invoke on every settings refetch.
-    pushKeys?.join(','),
-    toggleKeys?.join(','),
+    platform.metadata.isTauri, 
+    enabled, 
+    canRecord, pushKeys, toggleKeys
   ]);
 }
